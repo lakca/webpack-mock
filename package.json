@@ -35,5 +35,11 @@
   },
   "peerDependencies": {
     "webpack-dev-server": "*"
-  }
+  },
+  "files": [
+    "index.js",
+    "LICENSE",
+    "README.md",
+    "History.md"
+  ]
 }
