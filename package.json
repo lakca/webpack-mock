@@ -1,6 +1,6 @@
 {
   "name": "@lakca/webpack-mock",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "mock middleware for webpack(express).",
   "main": "index.js",
   "scripts": {
