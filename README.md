@@ -2,6 +2,9 @@
 
 > Add mocked routes to webpack dev server. Also, this is just an [express][express] middleware, you can use this in any [express][express] used.
 
+[![Build Status](https://travis-ci.org/lakca/webpack-mock.svg?branch=master)](https://travis-ci.org/lakca/webpack-mock)
+[![codecov](https://codecov.io/gh/lakca/webpack-mock/branch/master/graph/badge.svg)](https://codecov.io/gh/lakca/webpack-mock)
+
 ## Usage
 
 > See detail in [test](test/main.js#L11).
