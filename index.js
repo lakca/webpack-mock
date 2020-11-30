@@ -131,7 +131,11 @@ module.exports = options => {
             ? new Array(count).fill(null).map((e, i) => mock(render(response, Object.assign({ req, i }, args))))
             : mock(render(response, Object.assign({ req }, args)))
         if (processResponse) r = processResponse(r, req, res)
-        if (r && r !== res) res.send(r)
+        if (r === res) {
+          res.end()
+        } else if (r !== void 0) {
+          res.send(r)
+        }
       })
     }
     return items.length
