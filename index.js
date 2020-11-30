@@ -126,11 +126,11 @@ module.exports = options => {
       app[method || 'get'](url, function(req, res) {
         const count = range ? random(range) : 1
         let r = typeof response === 'function'
-          ? response(req, res, { count, render })
+          ? response(req, res, { count, render, mock })
           : range
             ? new Array(count).fill(null).map((e, i) => mock(render(response, Object.assign({ req, i }, args))))
             : mock(render(response, Object.assign({ req }, args)))
-        if (processResponse) r = processResponse(r, req, res)
+        if (processResponse) r = processResponse(r, req, res, { count, render, mock })
         if (r === res) {
           res.end()
         } else if (r !== void 0) {
