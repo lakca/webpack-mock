@@ -36,6 +36,9 @@ const { watch } = require('chokidar')
  *  - `1..10`, length is between 1 and 10, including 1 and 10.
  *  - `..10`, the same as `0..10`
  *
+ * @property {number|[number, number]} delay
+ * delay seconds(or array providing min and max delay seconds) to send response.
+ *
  * @property {object} args
  * Additional arguments `object` for parameters in interpolation.
  *
@@ -69,7 +72,14 @@ module.exports = options => {
         stack.splice(anchor, count)
         const start = stack.length
         delete require.cache[filepath]
-        count = mountRoutes(app)
+        try {
+          count = mountRoutes(app)
+        } catch (e) {
+          console.error(e)
+          count = 0
+          app.emit('routeReloadFailed')
+          return
+        }
         // move to the original position.
         stack.splice(anchor, 0, ...stack.splice(start, count))
         app.emit('routeReloaded')
@@ -89,7 +99,7 @@ module.exports = options => {
       items.push.apply(items, require(file))
     }
     for (const item of items) {
-      let method, url, response, range, args, processResponse, j
+      let method, url, response, range, delay, args, processResponse, j
       if (Array.isArray(item)) {
         switch (item.length) {
           case 0:
@@ -115,26 +125,31 @@ module.exports = options => {
                 case 'string':
                   range = item[j]
                   break
+                case 'number':
+                  delay = item[j]
+                  break
                 default:
               }
               j++
             }
         }
       } else {
-        ({ method, url, response, range, args, processResponse } = item)
+        ({ method, url, response, range, delay, args, processResponse } = item)
       }
       app[method || 'get'](url, function(req, res) {
         const count = range ? random(range) : 1
         let r = typeof response === 'function'
-          ? response(req, res, { count, render, mock })
+          ? response(req, res, { count, render, mock, delayCall })
           : range
             ? new Array(count).fill(null).map((e, i) => mock(render(response, Object.assign({ req, i }, args))))
             : mock(render(response, Object.assign({ req }, args)))
-        if (processResponse) r = processResponse(r, req, res, { count, render, mock })
         if (r === res) {
-          res.end()
-        } else if (r !== void 0) {
-          res.send(r)
+          delayCall(delay, () => res.end())
+        } else {
+          if (processResponse) {
+            r = processResponse(r, req, res, { count, render, mock, delayCall })
+          }
+          delayCall(delay, () => res.send(r))
         }
       })
     }
@@ -202,4 +217,11 @@ function render(tpl, ctx) {
     r = tpl
   }
   return r
+}
+
+function delayCall(seconds, cb) {
+  if (Array.isArray(seconds)) {
+    seconds = Math.random() * (seconds[1] - seconds[0]) + seconds[0]
+  }
+  setTimeout(cb, seconds * 1000)
 }
