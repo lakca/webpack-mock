@@ -56,10 +56,6 @@ const { watch } = require('chokidar')
  * @param {string|string[]} options.routeFiles
  *  Specify mock routes definition file/files, regarded as absolute path/paths where mock routes definition files are;
  *
- * @param {string|string[]} [options.watch]
- *  Watch mock folders/files to refresh mock routes.
- *  if any folder will effect the mock data, it should be included.
- *
  * @param {RegExp} [options.ignore]
  * ignore pattern.
  *
