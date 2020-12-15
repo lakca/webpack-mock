@@ -79,6 +79,7 @@ module.exports = options => {
       unwatchRequireChain(filepath)
       clearRequireCache(filepath)
       loadRoutes()
+      console.log(watcher.getWatched())
     })
 
     function loadRoutes() {
