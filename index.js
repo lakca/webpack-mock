@@ -77,10 +77,14 @@ module.exports = options => {
     const stack = app._router.stack
     const addedLayers = []
     let anchor = -1
-    mountRoutes()
+    loadRoutes()
     watcher.on('all', (event, filepath) => {
       unwatchRequireChain(filepath)
       clearRequireCache(filepath)
+      loadRoutes()
+    })
+
+    function loadRoutes() {
       try {
         mountRoutes()
       } catch (e) {
@@ -92,8 +96,7 @@ module.exports = options => {
         return
       }
       app.emit('reloadRouteSuccess')
-    })
-
+    }
     /**
      * 1. remove previous added routes.
      * 2. reset `anchor` and `routeCount`.
@@ -165,7 +168,7 @@ module.exports = options => {
             } else {
               continue
             }
-            processResponse = processResponse.filter(e => typeof e === 'function')
+            processResponse = (processResponse || []).filter(e => typeof e === 'function')
             app[method || 'get'](url, function(req, res) {
               const count = range ? random(range) : 1
               let r
@@ -236,10 +239,13 @@ module.exports = options => {
     // delete cache from entry(route file) to changed file
     function clearRequireCache(id) {
       if (require.cache[id]) {
+        let parentId
         if (require.cache[id].parent) {
-          clearRequireCache(require.cache[id].parent.id)
+          parentId = require.cache[id].parent.id
+          removeEle(require.cache[id].parent.children, require.cache[id])
         }
         delete require.cache[id]
+        clearRequireCache(parentId)
       }
     }
   }
@@ -325,5 +331,12 @@ function eachRequire(id, handler) {
         })
       }
     }
+  }
+}
+
+function removeEle(arr, el) {
+  const index = arr.indexOf(el)
+  if (~index) {
+    arr.splice(index, 1)
   }
 }

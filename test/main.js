@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const request = require('supertest')
 const express = require('express')
 const path = require('path')
@@ -5,8 +6,19 @@ const fs = require('fs')
 const mock = require('..')
 const mockFile = path.join(__dirname, 'data/mock.js')
 const tmpMockFile = path.join(__dirname, 'data/mock.tmp.js')
+const dependenceFile = path.join(__dirname, 'data/dependence.js')
 
-fs.writeFileSync(tmpMockFile, fs.readFileSync(mockFile))
+fs.writeFileSync(tmpMockFile, fs.readFileSync(mockFile) + `\nrequire('${dependenceFile}')`)
+fs.writeFileSync(dependenceFile, `module.exports = Math.random()`)
+
+function parallel(arr) {
+  const cur = arr.shift()
+  if (!cur) return
+  describe(`parallel: ${cur[0]}`, function() {
+    after(() => parallel(arr))
+    it(cur[0], cur[1]).timeout(2000)
+  })
+}
 
 function start(options) {
   const app = express()
@@ -107,36 +119,42 @@ function basicTests(app, name) {
 describe('main', function() {
   const app = start({
     routeFiles: tmpMockFile,
-    watch: tmpMockFile
+    watch: tmpMockFile,
+    silent: true
   })
 
   // initial load
   basicTests(app, 'jack')
 
-  after(function(done) {
-    // change mock file later with adding extra cases.
-    fs.writeFileSync(tmpMockFile, fs.readFileSync(tmpMockFile).toString('utf8') + `
-      module.exports.push(['/additional', 'ok'])
-    `)
+  after(function() {
 
-    app.once('routeReloaded', function() {
-      describe('Tests after mock file change', function() {
-
-        basicTests(app, 'lily')
-
-        it('additional', function(done) {
+    parallel([
+      ['adding route', function(done) {
+        app.once('reloadRouteSuccess', function() {
           request(app).get('/additional').expect('ok', done)
         })
-      })
-      done()
-    })
-  })
-})
+        // change mock file later with adding extra cases.
+        fs.writeFileSync(tmpMockFile, `${fs.readFileSync(tmpMockFile).toString('utf8')}
+          module.exports.push(['/additional', 'ok'])`)
+      }],
+      ['grammar error, expects triggering failed event.', function(done) {
+        // failed event
+        app.once('reloadRouteFailed', () => {
+          done()
+        })
+        // change with error
+        fs.writeFileSync(dependenceFile, `module.exports = math.random()`)
+      }],
+      ['fixed grammar error.', function(done) {
+        app.once('reloadRouteSuccess', function() {
+          done()
+          describe('Tests after correct', function() {
+            basicTests(app, 'lily')
+          })
+        })
+        fs.writeFileSync(dependenceFile, `module.exports = Math.random()`)
+      }]
+    ])
 
-describe('up to 100%', function() {
-  const app = start({
-    routeFiles: [tmpMockFile],
-    watch: [tmpMockFile]
   })
-  basicTests(app, 'mary')
 })

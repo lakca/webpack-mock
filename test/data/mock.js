@@ -17,6 +17,7 @@ module.exports = [
     url: '/object/:name',
     args: { arg0: 'hello' },
     range: '..10',
+    delay: 1,
     response: {
       int: 10,
       null: null,
