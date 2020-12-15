@@ -320,14 +320,15 @@ function delayCall(seconds, cb) {
   setTimeout(cb, seconds * 1000)
 }
 
-function eachRequire(id, handler) {
+function eachRequire(id, handler, occurrence = []) {
   const mod = require.cache[id]
-  if (mod) {
+  if (mod && !occurrence.includes(id)) {
+    occurrence.push(mod.id)
     const terminated = handler(mod)
     if (!terminated) {
       if (mod.children) {
         mod.children.forEach(childMod => {
-          eachRequire(childMod.id, handler)
+          eachRequire(childMod.id, handler, occurrence)
         })
       }
     }
