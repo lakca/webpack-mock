@@ -147,6 +147,7 @@ describe('main', function() {
       }],
       ['fixed grammar error.', function(done) {
         app.once('reloadRouteSuccess', function() {
+          console.log('listened')
           done()
           describe('Tests after correct', function() {
             basicTests(app, 'lily')

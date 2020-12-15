@@ -75,6 +75,7 @@ module.exports = options => {
     let anchor = -1
     loadRoutes()
     watcher.on('all', (event, filepath) => {
+      console.log('watch: ', filepath)
       unwatchRequireChain(filepath)
       clearRequireCache(filepath)
       loadRoutes()
@@ -84,6 +85,7 @@ module.exports = options => {
       try {
         mountRoutes()
       } catch (e) {
+        console.log('failed')
         if (options.silent) {
           app.emit('reloadRouteFailed', e)
         } else {
@@ -91,6 +93,7 @@ module.exports = options => {
         }
         return
       }
+      console.log('success')
       app.emit('reloadRouteSuccess')
     }
     /**
